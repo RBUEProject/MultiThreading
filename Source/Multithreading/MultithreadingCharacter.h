@@ -63,6 +63,17 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
 
+	/////////////////////////////////////////////////////////////////////////////////
+	//游戏线程执行
+	UFUNCTION(BlueprintCallable,Category = MultiThreading)
+	void CaculatePrimeNumbers();
+	//其他线程执行
+	UFUNCTION(BlueprintCallable,Category = MultiThreading)
+	void CaculatePrimeNumberAsync();
+
+	UPROPERTY(EditAnywhere,Category = MultiThreading)
+	int32 MaxPrime;
+	//////////////////////////////////////////////////////////////////////////////////
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -70,3 +81,46 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 };
 
+namespace ThreadingTest
+{
+	static void CaculatePrimeNumbers(int32 UpperLimit)
+	{
+		for (int32 i = 1; i <= UpperLimit; ++i)
+		{
+			bool isPrime = true;
+			for (int32 j = 2; j <= i/2; ++j)
+			{
+				if (FMath::Fmod(i, j) == 0)//对浮点数进行取模（求余）
+				{
+					isPrime = false;
+					break;
+				}
+			}
+			if(isPrime)GLog->Log("Prime number #"+FString::FromInt(i)+":"+FString::FromInt(i));
+		}
+	}
+}
+
+class PrimeCaculationAsyncTask : public FNonAbandonableTask
+{
+	int32 m_MaxPrime;
+
+public:
+	PrimeCaculationAsyncTask(int32 MaxPrime)
+	{
+		m_MaxPrime = MaxPrime;
+	}
+
+	FORCEINLINE TStatId GetStatId()const
+	{
+		RETURN_QUICK_DECLARE_CYCLE_STAT(PrimeCaculationAsyncTask, STATGROUP_ThreadPoolAsyncTasks);
+	}
+
+	void DoWork()
+	{
+		ThreadingTest::CaculatePrimeNumbers(m_MaxPrime);
+		GLog->Log("--------------------------------------------------------------------");
+		GLog->Log("End of prime numbers calculation on background thread");
+		GLog->Log("--------------------------------------------------------------------");
+	}
+};

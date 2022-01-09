@@ -77,6 +77,19 @@ void AMultithreadingCharacter::SetupPlayerInputComponent(class UInputComponent* 
 }
 
 
+void AMultithreadingCharacter::CaculatePrimeNumbers()
+{
+	ThreadingTest::CaculatePrimeNumbers(MaxPrime);
+	GLog->Log("--------------------------------------------------------------------");
+	GLog->Log("End of prime numbers calculation on game thread");
+	GLog->Log("--------------------------------------------------------------------");
+}
+
+void AMultithreadingCharacter::CaculatePrimeNumberAsync()
+{
+	(new FAutoDeleteAsyncTask<PrimeCaculationAsyncTask>(MaxPrime))->StartBackgroundTask();
+}
+
 void AMultithreadingCharacter::OnResetVR()
 {
 	// If Multithreading is added to a project via 'Add Feature' in the Unreal Editor the dependency on HeadMountedDisplay in Multithreading.Build.cs is not automatically propagated
